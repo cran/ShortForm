@@ -1,8 +1,8 @@
 Package: ShortForm
 Type: Package
 Title: Automatic Short Form Creation
-Version: 0.4.2
-Date: 2018-10-16
+Version: 0.4.3
+Date: 2019-8-7
 Authors@R: c(person("Anthony", "Raborn", email = "anthony.w.raborn@gmail.com", role = c("aut", "cre")), person("Walter", "Leite", email = "Walter.Leite@coe.ufl.edu", role = "aut"))
 Description: Performs automatic creation of short forms of scales with an 
     ant colony optimization algorithm and a Tabu search. As implemented in the 
@@ -19,7 +19,7 @@ Description: Performs automatic creation of short forms of scales with an
     <doi:10.1080/10705511.2017.1409074> for an applied example of the Tabu search.
 License: LGPL (>= 2.0, < 3) | Mozilla Public License
 LazyData: TRUE
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Suggests: knitr, MplusAutomation (>= 0.7), rmarkdown
 Imports: lavaan (>= 0.5-22), ggplot2, tidyr, stringr
 Depends: R (>= 3.0.0)
@@ -27,9 +27,9 @@ URL: https://github.com/AnthonyRaborn/ShortForm
 BugReports: https://github.com/AnthonyRaborn/ShortForm/issues
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2018-10-16 22:49:14 UTC; chika
+Packaged: 2019-08-07 17:27:08 UTC; araborn
 Author: Anthony Raborn [aut, cre],
   Walter Leite [aut]
 Maintainer: Anthony Raborn <anthony.w.raborn@gmail.com>
 Repository: CRAN
-Date/Publication: 2018-10-17 04:20:03 UTC
+Date/Publication: 2019-08-07 17:40:02 UTC
