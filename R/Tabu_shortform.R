@@ -30,7 +30,7 @@
 #' data(simulated_test_data)
 #' tabuResult <- tabuShortForm(initialModel = shortAntModel,
 #'                              originalData = simulated_test_data, numItems = 7,
-#'                              allItems = colnames(simulated_test_data)[3:11],
+#'                              allItems = colnames(simulated_test_data)[3:10],
 #'                              niter = 1, tabu.size = 3)
 #' lavaan::summary(tabuResult$best.mod) # shows the resulting model
 #'
@@ -136,30 +136,55 @@ tabuShortForm <-
     cat("The initial short form is: \n")
     cat(paste(initialShortModel$model.syntax, collapse = "\n"))
     best.obj <- all.obj <- current.obj <- criterion(initialShortModel$lavaan.output)
-    best.model <- current.model <- initialShortModel$lavaan.output
+    best.syntax <- current.syntax <- initialShortModel$model.syntax
+    best.mod <- current.mod <- initialShortModel$lavaan.output
     tabu.list <- vector("numeric")
     
-    factors = unique(lavaan::lavaanify(initialModel)[lavaan::lavaanify(initialModel)$op ==
-                                                       "=~", 'lhs'])
+    factors = unique(lavaan::lavaanify(initialModel
+                                       )[lavaan::lavaanify(initialModel
+                                                           )$op =="=~", 'lhs'])
     externalRelation = unlist(strsplit(x = initialModel, split = "\\n"))[grep(" ~ ", unlist(strsplit(x = initialModel, split = "\\n")))]
     factorRelation = unlist(strsplit(x = initialModel, split = "\\n"))[grep(" ~~ ", unlist(strsplit(x = initialModel, split = "\\n")))]
     
     if (is.list(allItems)) {
-      included.items <-
-        stringr::str_extract_all(string = initialShortModel$model.syntax,
-                                 pattern = paste0("(\\b", paste0(
-                                   paste0(unlist(allItems), collapse = "\\b)|(\\b"), "\\b)"
-                                 )))
+      included.items = vector('list', length(allItems))
+      for (l in 1:length(allItems)) {
+       included.items[[l]] =
+         stringr::str_extract_all(
+           string =  
+                grep(pattern = "(?<=~)[A-z0-9 +]*" ,
+                x = stringr::str_split(string = initialShortModel$model.syntax, 
+                              pattern = "\\b\\n\\b", 
+                              simplify = T),
+                perl = T,
+                value = T
+                )[l],
+           pattern = 
+             paste0(paste("\\b", 
+                          unlist(allItems), 
+                          "\\b",
+                          sep = ""), 
+                    collapse= "|")
+         )[[1]]
+      }
     } else {
-      included.items <-
-        unlist(as.vector(
-          stringr::str_extract_all(
-            string = initialShortModel$model.syntax,
-            pattern = paste0("(\\b", paste0(
-              paste0(allItems, collapse = "\\b)|(\\b"), "\\b)"
-            ))
-          )
-        ))
+      included.items = 
+        stringr::str_extract_all(
+          string =  
+            grep(pattern = "(?<=~)[A-z0-9 +]*" ,
+                 x = stringr::str_split(string = initialShortModel$model.syntax, 
+                                        pattern = "\\b\\n\\b", 
+                                        simplify = T),
+                 perl = T,
+                 value = T
+            ),
+          pattern = 
+            paste0(paste("\\b", 
+                         unlist(allItems), 
+                         "\\b",
+                         sep = ""), 
+                   collapse= "|")
+        )[[1]]
     }
     
     # Do iterations
@@ -178,9 +203,20 @@ tabuShortForm <-
       tmp.mod <- list()
       tmp.syntax <- list()
       
+      if (is.list(allItems)) {
+        for (l in 1:length(allItems)) {
+          temp.items = included.items[[l]]
+          included.items[[l]] = allItems[[l]][
+            which(allItems[[l]] %in% temp.items
+                  )]
+        }
+      } else {
+        included.items = allItems[which(allItems %in% included.items)]
+      }
+      
       
       if (is.list(allItems)) {
-        excluded.items = list()
+        excluded.items = vector('list', length(allItems))
         for (l in 1:length(allItems)) {
           temp.items = included.items[[l]]
           excluded.items[[l]] = allItems[[l]][which(!(allItems[[l]] %in% temp.items))]
@@ -352,7 +388,7 @@ tabuShortForm <-
         cat("The initial short form is: \n")
         cat(paste(initialShortModel$model.syntax, collapse = "\n"))
         best.obj <- all.obj <- current.obj <- criterion(initialShortModel$lavaan.output)
-        best.model <- current.model <- initialShortModel$lavaan.output
+        best.mod <- current.mod <- initialShortModel$lavaan.output
         tabu.list <- vector("numeric")
         
         factors = unique(lavaan::lavaanify(initialModel)[lavaan::lavaanify(initialModel)$op ==
@@ -393,7 +429,7 @@ tabuShortForm <-
       }
       
       # Update if the current model is better than the best model
-      if (current.obj <= best.obj) {
+      if (current.obj < best.obj) {
         best.obj <- current.obj
         best.mod <- current.mod
         best.syntax <- current.syntax
@@ -405,7 +441,11 @@ tabuShortForm <-
     
     ret <- list()
     ret$best.obj <- best.obj
-    ret$best.mod <- best.mod[[1]]
+    if (is.list(best.mod)) {
+      ret$best.mod <- best.mod[[1]]
+    } else {
+      ret$best.mod <- best.mod
+    }
     ret$best.syntax <- best.syntax
     ret$all.obj <- all.obj
     class(ret) = "tabu"
