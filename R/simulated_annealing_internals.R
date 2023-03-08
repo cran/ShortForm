@@ -1,3 +1,83 @@
+randomInitialModel <- 
+  function(init.model,
+           maxItems,
+           allItems,
+           initialData,
+           bifactorModel,
+           lavaan.model.specs) {
+    mapply(
+      assign,
+      names(lavaan.model.specs),
+      lavaan.model.specs,
+      MoreArgs = list(envir = environment())
+    )
+  # extract the latent factor syntax
+  mapply(
+    assign,
+    c("factors", "itemsPerFactor"),
+    syntaxExtraction(initialModelSyntaxFile = init.model, items = allItems),
+    MoreArgs = list(envir = environment())
+  )
+  
+  # save the external relationships
+  vectorModel <- unlist(strsplit(x = init.model, split = "\\n"))
+  externalRelation <- vectorModel[grep(" ~ ", vectorModel)]
+  factorRelation <- vectorModel[grep(" ~~ ", vectorModel)]
+  
+  # reduce the number of items for each factor according to maxItems
+  newItemsPerFactor <- list()
+  for (i in 1:length(itemsPerFactor)) {
+    newItemsPerFactor[[i]] <- 
+      sample(x = unique(unlist(itemsPerFactor[i])), 
+             size = unlist(maxItems[i]))
+  }
+  
+  if (bifactorModel == TRUE) {
+    # if bifactorModel == TRUE, fix the items so the newItems all load on the bifactor
+    # assumes that the bifactor latent variable is the last one
+    newItemsPerFactor[[length(itemsPerFactor)]] <- unlist(newItemsPerFactor[1:(length(itemsPerFactor) - 1)])
+  }
+  
+  # create the new model syntax
+  
+  newModelSyntax <- c()
+  for (i in 1:length(factors)) {
+    newModelSyntax[i] <- paste(
+      factors[i],
+      "=~",
+      paste(newItemsPerFactor[[i]], collapse = " + ")
+    )
+  }
+  newModelSyntax <- 
+    paste0(newModelSyntax, externalRelation, factorRelation, collapse = "\n")
+  newModelSyntax <-
+    stringr::str_replace_all(newModelSyntax, "\n\n", "\n")
+  
+  # fit the new model
+  newModel <- modelWarningCheck(
+    lavaan::lavaan(
+      model = newModelSyntax,
+      data = initialData,
+      model.type = model.type,
+      int.ov.free = int.ov.free,
+      int.lv.free = int.lv.free,
+      auto.fix.first = auto.fix.first,
+      std.lv = std.lv,
+      auto.fix.single = auto.fix.single,
+      auto.var = auto.var,
+      auto.cov.lv.x = auto.cov.lv.x,
+      auto.th = auto.th,
+      auto.delta = auto.delta,
+      auto.cov.y = auto.cov.y,
+      ordered = ordered,
+      estimator = estimator,
+    ),
+    modelSyntax = newModelSyntax
+  )
+  
+  return(newModel)
+}
+
 randomNeighborShort <-
   function(currentModelObject,
            numChanges,
@@ -22,7 +102,7 @@ randomNeighborShort <-
     )
     # take the model syntax from the currentModelObject
     internalModelObject <- 
-      stringr::str_split(currentModelObject$model.syntax, 
+      stringr::str_split(currentModelObject@model.syntax, 
                          pattern = "\n",
                          simplify = T)
     
@@ -44,7 +124,7 @@ randomNeighborShort <-
     
     replacementItemPool <- c()
     for (i in 1:length(factors)) {
-      if (class(allItems) == "list") {
+      if (inherits(allItems, "list")) {
         replacementItemPool[[i]] <- 
           allItems[[i]][!(allItems[[i]] %in% currentItems[[i]])]
       } else {
@@ -96,7 +176,7 @@ randomNeighborShort <-
     
     # create the new model syntax
     newModelSyntax <- as.vector(
-      stringr::str_split(currentModelObject$model.syntax, 
+      stringr::str_split(currentModelObject@model.syntax, 
                          "\n", 
                          simplify = T)
     )
@@ -129,127 +209,228 @@ randomNeighborShort <-
         auto.th = auto.th,
         auto.delta = auto.delta,
         auto.cov.y = auto.cov.y
-      )
+      ),
+      modelSyntax = newModelSyntax
     )
     
-    randomNeighborModel$model.syntax = newModelSyntax
     return(randomNeighborModel)
   }
 
-selectionFunction <-
+randomNeighborFull <-
   function(currentModelObject = currentModel,
-           randomNeighborModel,
-           currentTemp,
-           maximize,
-           fitStatistic,
-           consecutive) {
+           numChanges = numChanges,
+           data) {
+    # using lavaan functions, construct a full parameter table
+    paramTable <- lavaan::parTable(currentModelObject)
+    
+    # select the rows that correspond to parameters related to the latent variables
+    latentVariables <-
+      row.names(lavaan::inspect(currentModelObject, "cor.lv"))
+    currentModelParamsLV <-
+      paramTable[paramTable$lhs %in% latentVariables, ]
+    
+    # randomly select rows to make changes to
+    randomChangesRows <-
+      sample(currentModelParamsLV$id, size = numChanges)
+    changeParamTable <- paramTable[randomChangesRows, ]
+    
+    # make the changes. If currently free, fix to 0; if fixed to 0, set to free
+    paramTable$free[randomChangesRows] <-
+      1 - paramTable$free[randomChangesRows]
+    
+    # remove the starting value, estimates, and standard errors of the currentModel
+    paramTable$est <- NULL
+    paramTable$se <- NULL
+    paramTable$start <- NULL
+    paramTable$labels <- NULL
+    
+    # refit the model
+    prevModel <- as.list(currentModelObject@call)
+    prevModel$model <- paramTable
+    
+    randomNeighborModel <-
+      modelWarningCheck(
+      lavaan::lavaan(
+        model = prevModel$model,
+        data = data
+      ),
+      modelSyntax = prevModel$model
+    )
+    
+    return(randomNeighborModel)
+  }
+
+goal <-
+  function(x, fitStatistic = "cfi", maximize) {
+    # if using lavaan and a singular fit statistic,
+    if (inherits(x, "lavaan") &
+        is.character(fitStatistic) & length(fitStatistic) == 1) {
+      energy <- fitWarningCheck(lavaan::fitMeasures(x, fit.measures = fitStatistic),
+                                maximize)
+      if (is.na(energy) & maximize == TRUE) {
+        energy = -Inf
+      } else if (is.na(energy)) {
+        energy = Inf
+      }
+      
+      if (maximize == TRUE) {
+        return(-energy)
+      } else {
+        return(energy)
+      }
+    } else {
+      if (inherits(x, "NULL")) {
+        if (maximize == TRUE) {
+          return(-Inf)
+        } else {
+          return(Inf)
+        }
+      }
+    }
+  }
+
+selectionFunction <-
+  function (currentModelObject,
+            randomNeighborModel,
+            currentTemp,
+            maximize,
+            fitStatistic,
+            consecutive)
+  {
     # check if the randomNeighborModel is a valid model for use
-    if (length(randomNeighborModel[[2]]) > 0 |
-        length(randomNeighborModel[[2]]) > 0) {
+    if (!inherits(randomNeighborModel, "modelCheck")) {
+      return(currentModelObject)
+    }
+    if ( 
+      length(randomNeighborModel@warnings) > 1 |
+      length(randomNeighborModel@errors) > 1 
+    ) {
       return(currentModelObject)
     }
     
     # check that the current model isn't null
-    if (is.null(currentModelObject[[1]])) {
+    if (!inherits(currentModelObject, "modelCheck")) {
+      return(randomNeighborModel)
+      }
+    if (is.null(currentModelObject@model.output)) {
+      return(randomNeighborModel)
+    }
+    
+    randomNeighborConverge <-
+      tryCatch(
+        lavaan::fitmeasures(object = randomNeighborModel@model.output,
+                            fit.measures = fitStatistic),
+        error = function(e) {
+          if (length(e) > 0) {
+            NULL
+          }
+        }
+      )
+    if (is.null(randomNeighborConverge)) {
+      cat("\rNew model did not converge.                                                                                          ")
+      return(currentModelObject)
+    }
+    # this is the Kirkpatrick et al. method of selecting between currentModel and randomNeighborModel
+    if (goal(randomNeighborModel@model.output, fitStatistic, maximize) < goal(currentModelObject@model.output, fitStatistic, maximize)) {
+      cat(paste0(
+        "\rOld Fit: ",
+        round(as.numeric(
+          fitWarningCheck(
+            lavaan::fitmeasures(object = currentModelObject@model.output,
+                                fit.measures = fitStatistic),
+            maximize
+          )
+        ), 3),
+        " New Fit: ",
+        round(as.numeric(
+          fitWarningCheck(
+            lavaan::fitmeasures(object = randomNeighborModel@model.output,
+                                fit.measures = fitStatistic),
+            maximize
+          )
+        ), 3),
+        "                                                                    "
+      ))
+      consecutive <- consecutive + 1
       return(randomNeighborModel)
     } else {
-    
-    probability = exp(-(goal(randomNeighborModel[[1]], fitStatistic, maximize) - goal(currentModelObject[[1]], fitStatistic, maximize)) / currentTemp)
-    
-    }
-    
-    if (probability > stats::runif(1)) {
-      newModel = randomNeighborModel
-    } else { 
-      newModel = currentModelObject
-    }
-  }
-
-goal <- function(x, fitStatistic = 'cfi', maximize) {
-  # if using lavaan and a singular fit statistic,
-  if (class(x) == "lavaan" & is.character(fitStatistic) & length(fitStatistic) == 1) {
-    energy <- fitWarningCheck(lavaan::fitMeasures(x, fit.measures = fitStatistic),
-                            maximize)
-    
-    # if trying to maximize a value, return its negative
-    if (maximize == TRUE) {
-      return(-energy)
-    } else {
-      # if minimizing a value, return the value
-      return(energy)
-    }
-  } else {
-    if (class(x) == "NULL") {
-      if (maximize == TRUE) {
-        return(-Inf)
+      probability <- exp(-(
+        goal(randomNeighborModel@model.output, fitStatistic, maximize) - goal(currentModelObject@model.output, fitStatistic, maximize)
+      ) / currentTemp)
+      
+      if (is.nan(probability)) probability = 0
+      
+      if (probability > stats::runif(1)) {
+        newModel <- randomNeighborModel
       } else {
-        return(Inf)
+        newModel <- currentModelObject
       }
+      
+      consecutive <- ifelse(
+        identical(
+          lavaan::parameterTable(newModel@model.output),
+          lavaan::parameterTable(currentModelObject@model.output)
+        ),
+        consecutive + 1,
+        0
+      )
+      cat(paste0(
+        "\rOld Fit: ",
+        round(as.numeric(
+          lavaan::fitmeasures(object = currentModelObject@model.output,
+                              fit.measures = fitStatistic)
+        ), 3),
+        " New Fit: ",
+        round(as.numeric(
+          lavaan::fitmeasures(object = randomNeighborModel@model.output,
+                              fit.measures = fitStatistic)
+        ), 3),
+        " Probability: ",
+        round(probability, 3)
+      ))
+      return(newModel)
     }
   }
-}
 
 consecutiveRestart <-
   function(maxConsecutiveSelection = 25, consecutive) {
     if (consecutive == maxConsecutiveSelection) {
-      currentModel = bestModel
-      consecutive = 0
+      currentModel <- bestModel
+      consecutive <- 0
     }
   }
 
-linearTemperature <- function(currentStep, maxSteps) {
-  currentTemp <- (maxSteps - (currentStep)) / maxSteps
-}
-
-quadraticTemperature <- function(currentStep, maxSteps) {
-  currentTemp <- ((maxSteps - (currentStep)) / maxSteps) ^ 2
-}
-
-logisticTemperature <- function(currentStep, maxSteps) {
-  x = 1:maxSteps
-  x.new = scale(x, center = T, scale = maxSteps / 12)
-  currentTemp <- 1 / (1 + exp((x.new[(currentStep + 1)])))
-}
-
 checkModels <- function(currentModel, fitStatistic, maximize = maximize, bestFit = bestFit, bestModel) {
-  if (class(currentModel) == "list") {
-    currentSyntax <- currentModel$model.syntax
-    currentModel <- currentModel[[1]]
-  }
-  if (is.null(currentModel)) {
+  if (is.null(currentModel)|!inherits(currentModel, "modelCheck")) {
     return(bestModel)
   }
-  currentFit = fitWarningCheck(
-    lavaan::fitmeasures(object = currentModel, fit.measures = fitStatistic),
+  currentFit <- fitWarningCheck(
+    lavaan::fitmeasures(object = currentModel@model.output, fit.measures = fitStatistic),
     maximize
-    )
+  )
   if (maximize == TRUE) {
     if (currentFit > bestFit) {
-      bestModel = list()
-      bestModel$bestModel = currentModel
-      bestModel$bestSyntax = currentSyntax
+      bestModel <- currentModel
     } else {
-      bestModel = bestModel
+      bestModel <- bestModel
     }
   } else {
     if (currentFit < bestFit) {
-      bestModel = list()
-      bestModel$bestModel = currentModel
-      bestModel$bestSyntax = currentSyntax
+      bestModel <- currentModel
     } else {
       if (currentFit < bestFit) {
-        bestModel = currentModel
+        bestModel <- currentModel
       } else {
-        bestModel = bestModel
+        bestModel <- bestModel
       }
     }
   }
-  
-    return(bestModel)
-  }
 
-modelWarningCheck <- function(expr) {
-  warn <- err <- c()
+  return(bestModel)
+}
+
+modelWarningCheck <- function(expr, modelSyntax) {
+  warn <- err <- c('none')
   value <- withCallingHandlers(
     tryCatch(
       expr,
@@ -265,28 +446,32 @@ modelWarningCheck <- function(expr) {
       invokeRestart("muffleWarning")
     }
   )
-  list(
-    'lavaan.output' = value,
-    'warnings' <-
-      as.character(unlist(warn)),
-    'errors' <- as.character(unlist(err))
+  
+  new(
+    'modelCheck',
+    "model.output" = value,
+    "warnings" = as.character(unlist(warn)),
+    "errors" = as.character(unlist(err)),
+    'model.syntax' = modelSyntax
   )
 }
 
 
-syntaxExtraction = function(initialModelSyntaxFile, items) {
-  
+syntaxExtraction <- function(initialModelSyntaxFile, items) {
+
   # extract the latent factor syntax
-  factors = unique(lavaan::lavaanify(initialModelSyntaxFile)[lavaan::lavaanify(initialModelSyntaxFile)$op ==
-                                                               "=~", 'lhs'])
-  vectorModelSyntax = stringr::str_split(string = initialModelSyntaxFile,
-                                         pattern = '\\n',
-                                         simplify = TRUE)
-  factorSyntax = c()
-  itemSyntax = c()
+  factors <- unique(lavaan::lavaanify(initialModelSyntaxFile)[lavaan::lavaanify(initialModelSyntaxFile)$op ==
+    "=~", "lhs"])
+  vectorModelSyntax <- stringr::str_split(
+    string = initialModelSyntaxFile,
+    pattern = "\\n",
+    simplify = TRUE
+  )
+  factorSyntax <- c()
+  itemSyntax <- c()
   for (i in 1:length(factors)) {
-    chosenFactorLocation = c(1:length(vectorModelSyntax))[grepl(x = vectorModelSyntax, pattern = paste0(factors[i], "[ ]{0,}=~ "))]
-    factorSyntax[i] = vectorModelSyntax[chosenFactorLocation]
+    chosenFactorLocation <- c(1:length(vectorModelSyntax))[grepl(x = vectorModelSyntax, pattern = paste0(factors[i], "[ ]{0,}=~ "))]
+    factorSyntax[i] <- vectorModelSyntax[chosenFactorLocation]
     # remove the factors from the syntax
     itemSyntax[i] <-
       gsub(
@@ -295,45 +480,28 @@ syntaxExtraction = function(initialModelSyntaxFile, items) {
         x = factorSyntax[i]
       )
   }
-  
+
   # extract the items for each factor
-  itemsPerFactor = stringr::str_extract_all(string = itemSyntax,
-                                            pattern = paste0("(\\b", paste0(
-                                              paste0(unlist(items), collapse = "\\b)|(\\b"), "\\b)"
-                                            )))
-  return(list('factors' = factors, 'itemsPerFactor' = itemsPerFactor))
+  itemsPerFactor <- stringr::str_extract_all(
+    string = itemSyntax,
+    pattern = paste0("(\\b", paste0(
+      paste0(unlist(items), collapse = "\\b)|(\\b"), "\\b)"
+    ))
+  )
+  return(list("factors" = factors, "itemsPerFactor" = itemsPerFactor))
 }
 
-modelWarningCheck <- function(expr) {
-  warn <- err <- c()
-  value <- withCallingHandlers(tryCatch(expr, error = function(e) {
-    err <<- append(err, regmatches(paste(e), gregexpr("ERROR: [A-z ]{1,}", 
-                                                      paste(e))))
-    NULL
-  }), warning = function(w) {
-    warn <<- append(warn, regmatches(paste(w), gregexpr("WARNING: [A-z ]{1,}", 
-                                                        paste(w))))
-    invokeRestart("muffleWarning")
-  })
-  list(lavaan.output = value, warnings <- as.character(unlist(warn)), 
-       errors <- as.character(unlist(err)))
-}
-
-fitWarningCheck <- function(expr, maximize) {
-  value <- withCallingHandlers(tryCatch(expr, 
-                                        error = function(e) {
-    if (maximize == T) {
-      return(0)
-    } else {
-      return(Inf)
-    }
-    invokeRestart("muffleWarning")
+fitWarningCheck <-
+  function(expr, maximize) {
+    value <- withCallingHandlers(tryCatch(
+      expr,
+      error = function(e) {
+        return(NA)
+        invokeRestart("muffleWarning")
+      }
+    ))
+    return(value)
   }
-  )
-  )
-  return(value)
-}
-
 
 checkModelSpecs <- 
   function(
@@ -424,23 +592,66 @@ fitStatTestCheck <-
   function(measures, test) {
     tempEnv <-
       new.env()
-    mapply(
-      assign, 
-      measures, 
-      0, 
-      MoreArgs=list(envir = tempEnv))
+    mapply(assign,
+           measures,
+           0,
+           MoreArgs = list(envir = tempEnv))
     
     checkIfEval <-
       tryCatch(
-        expr = eval(parse(text=test), 
-                    envir = tempEnv), 
+        expr = eval(parse(text = test),
+                    envir = tempEnv),
         error = function(e) {
-          stop("There was a problem with the fit.statistics.test provided. It cannot be evaluated properly. Please read the function documentation to see how to properly specify a test.")
+          stop(
+            "There was a problem with the fit.statistics.test provided.
+            It cannot be evaluated properly.
+            Please read the function documentation to see how to properly specify a test."
+          )
         }
       )
     
-    if (!is.character(test)) {
-          stop("There is a problem with the fit.statistics.test provided. The fit.statistics.test was given as a logical, not a character. Please read the function documentation to see how to properly specify a test. ")
-        }
-      
+    if (!is.character(test)&is.logical(test)) {
+      stop(
+        "There is a problem with the fit.statistics.test provided.
+        The fit.statistics.test was given as a logical, not a character.
+        Please read the function documentation to see how to properly specify a test."
+      )
+    } else if (!is.character(test)) {
+      stop(
+        "There is a problem with the fit.statistics.test provided.
+        The fit.statistics.test was not given as a character object.
+        Please read the function documentation to see how to properly specify a test."
+      )
+    }
+    checkIfEval
   }
+
+# allArgs ####
+# allArgs <- function(orig_values = FALSE) {
+#   # source: https://stackoverflow.com/a/47955845
+#   # get formals for parent function
+#   parent_formals <- formals(sys.function(sys.parent(n = 1)))
+#   
+#   # Get names of implied arguments
+#   fnames <- names(parent_formals)
+#   
+#   # Remove '...' from list of parameter names if it exists
+#   fnames <- fnames[-which(fnames == '...')]
+#   
+#   # Get currently set values for named variables in the parent frame
+#   args <- evalq(as.list(environment()), envir = parent.frame())
+#   
+#   # Get the list of variables defined in '...'
+#   args <- c(args[fnames], evalq(list(...), envir = parent.frame()))
+#   
+#   
+#   if(orig_values) {
+#     # get default values
+#     defargs <- as.list(parent_formals)
+#     defargs <- defargs[unlist(lapply(defargs, FUN = function(x) inherits(x, "name")))]
+#     args[names(defargs)] <- defargs
+#     setargs <- evalq(as.list(match.call())[-1], envir = parent.frame())
+#     args[names(setargs)] <- setargs
+#   }
+#   return(args)
+# }
