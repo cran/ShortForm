@@ -28,7 +28,7 @@
 #'
 #'  3. Define how the pheronome level will be computed: This is a function of
 #'  the characteristics of the short form that will be optimized. In Leite,
-#'  Huang and Marcoulides (2008), the pheronomone level was zero if model fit
+#'  Huang and Marcoulides (2008), the pheromone level was zero if model fit
 #'  indices did not meet Hu and Bentler's (1999) suggested thresholds, and equal
 #'  to the sum of path coefficients of a predictor variable if model fit indices
 #'  met thresholds. Currently, the package only implements pheromone calculation
@@ -76,12 +76,14 @@
 #'  filled in. Default value is \code{null}.
 #' @param ants A numeric value indicating the number of ants to send (e.g.,
 #'  number of short forms to evaluate) per iteration. Default value is 20.
-#' @param evaporation A numeric value which sets the percentage of the pheremone
+#' @param evaporation A numeric value which sets the percentage of the pheromone
 #'  that is retained after evaporation between steps of the algorithm. Default
 #'  value is 0.9, indicating 10% evaporation. Should be within the range of
 #'  (0,1), exclusive.
 #' @param antModel The lavaan formatted model. See \link[lavaan]{lavaan} for more
-#'  details. Defaults to the default \link[lavaan]{lavaan} values.
+#'  details. Defaults to the default \link[lavaan]{lavaan} values. NOTE: Each factor
+#'  and/or regression needs to be specified on a single line. Newline breaks and
+#'  carriage returns WILL break the function.
 #' @param list.items A list containing one or more character vectors of item
 #'  names for each factor, where each factor is a separate element of the list.
 #'  The items should be input in the order in which the factors are input in
@@ -212,7 +214,7 @@ antcolony.lavaan <- function(data = NULL, sample.cov = NULL, sample.nobs = NULL,
                              lavaan.model.specs = list(
                                model.type = "cfa", auto.var = T, estimator = "default",
                                ordered = NULL, int.ov.free = TRUE, int.lv.free = FALSE,
-                               auto.fix.first = TRUE, auto.fix.single = TRUE,
+                               auto.fix.first = TRUE, auto.fix.single = TRUE, auto.var = TRUE,
                                auto.cov.lv.x = TRUE, auto.th = TRUE, auto.delta = TRUE,
                                auto.cov.y = TRUE, std.lv = F,
                                group = NULL, group.label = NULL, group.equal = 'loadings',
@@ -509,7 +511,11 @@ antcolony.lavaan <- function(data = NULL, sample.cov = NULL, sample.nobs = NULL,
               run,
               bestAnt,
               count,
-              antResults[[bestAnt, 'model.fit']],
+              if (length(antResults[[bestAnt, 'model.fit']]) < length(fit.indices)) {
+                rep(NA, times = length(fit.indices))
+              } else {
+                antResults[[bestAnt, 'model.fit']]
+              },
               antResults[[bestAnt, 'mean.std.gammas']],
               antResults[[bestAnt, 'mean.std.betas']],
               antResults[[bestAnt, 'mean.var.exp']],
