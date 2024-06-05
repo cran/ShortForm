@@ -1,11 +1,11 @@
-db9c90a93bc576db069888f723d7f4d6 *DESCRIPTION
+937b2984f30f4049e9ed0d3444f8fc85 *DESCRIPTION
 f0202d3222a31572f54d46016ceb4710 *NAMESPACE
 47a284975f9bf09af8fd8e865466b3fa *NEWS
-8867efab002245dde87a278ffb52829f *NEWS.md
+9f52d40f5447aec63bcfdf26bc039b19 *NEWS.md
 316cc5bce4b06de04edfff4155b43c98 *R/ACO.R
 23ee79e5934d42ff0f13f61ae505a6ca *R/ACO_MPlus.R
 7107b08fb45bbdb585398e7a6c2c7654 *R/ACO_internals.R
-7dd963379a49148eb47b537ed2e193fe *R/ACO_lavaan.R
+a095a1ee2719fa073d9a3a57e820f697 *R/ACO_lavaan.R
 e7210323d3c18bb42ff2b9ad8060aff4 *R/SA.R
 faf5ed7fe3d68f9a7f48b8be554ca84d *R/ShortForm.R
 3e79c3f28b6703aeaabf499f0b7094e8 *R/TS.R
@@ -17,7 +17,7 @@ a5924f2868e4ee2ee214b28b496b4d4a *R/Tabu_internal.R
 4fae40ffb21cf87fca80268290b4a885 *R/data.R
 d0ffafbc5082c7813c436e0bbee0e76c *R/lavaan_copied_internal_functions.R
 a123d0d1bdd267ca5f5f177d091fcde2 *R/simulated_annealing.R
-a35a525847c5021d9d0b37ec7c1c344a *R/simulated_annealing_internals.R
+1ff74b538133b678fc10666e82ff91e0 *R/simulated_annealing_internals.R
 0db0cd51d19ec6d5d410791f08435aa2 *R/simulated_annealing_temperatures.R
 c13ac3ec7e14338c07536d3c92828a0f *R/tabu_sem_shortform.R
 24bc7c3f5a645905c53152bd3d0b8f61 *build/partial.rdb
@@ -54,5 +54,5 @@ b3cc4d6d24cb49e46274f0a892907511 *man/summary-ACO-method.Rd
 60cfb122f6c9f60605a304478b2cae84 *man/tabu.sem.Rd
 1d8d97985eecac4288b32c6fe1016aeb *man/tabuShortForm.Rd
 4e67da345da3089654cd10d13c2c8cad *tests/testthat.R
-696c13f5775488c8b7e0bb757312fb08 *tests/testthat/test-simulated_annealing_internals.R
+e7b36107bca96da9f00dfc1f08bfb3a9 *tests/testthat/test-simulated_annealing_internals.R
 927e92348a1e410e5a8f4bd564f3b450 *tests/testthat/test-temperatures.R

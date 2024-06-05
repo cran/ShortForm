@@ -1,8 +1,8 @@
 Package: ShortForm
 Type: Package
 Title: Automatic Short Form Creation
-Version: 0.5.4
-Date: 2024-05-22
+Version: 0.5.5
+Date: 2024-06-05
 Authors@R: c(person("Anthony", "Raborn", email = "anthony.w.raborn@gmail.com", 
     role = c("aut", "cre"), comment = c(ORCID = "0000-0002-8083-4739")), 
     person("Walter", "Leite", email = "Walter.Leite@coe.ufl.edu", role = "aut"))
@@ -30,9 +30,9 @@ URL: https://github.com/AnthonyRaborn/ShortForm
 BugReports: https://github.com/AnthonyRaborn/ShortForm/issues
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2024-05-22 17:35:17 UTC; AnthonyRaborn
+Packaged: 2024-06-05 15:55:30 UTC; AnthonyRaborn
 Author: Anthony Raborn [aut, cre] (<https://orcid.org/0000-0002-8083-4739>),
   Walter Leite [aut]
 Maintainer: Anthony Raborn <anthony.w.raborn@gmail.com>
 Repository: CRAN
-Date/Publication: 2024-05-22 17:50:03 UTC
+Date/Publication: 2024-06-05 17:00:09 UTC
