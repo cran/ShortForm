@@ -1,11 +1,11 @@
-937b2984f30f4049e9ed0d3444f8fc85 *DESCRIPTION
+6dadd19999e4779df35f7e1bb5026272 *DESCRIPTION
 f0202d3222a31572f54d46016ceb4710 *NAMESPACE
 47a284975f9bf09af8fd8e865466b3fa *NEWS
-9f52d40f5447aec63bcfdf26bc039b19 *NEWS.md
+5c3be392f2ae0186a4404fcc777737ae *NEWS.md
 316cc5bce4b06de04edfff4155b43c98 *R/ACO.R
 23ee79e5934d42ff0f13f61ae505a6ca *R/ACO_MPlus.R
 7107b08fb45bbdb585398e7a6c2c7654 *R/ACO_internals.R
-a095a1ee2719fa073d9a3a57e820f697 *R/ACO_lavaan.R
+a406b0bad790a2c381ebfc972e2068f7 *R/ACO_lavaan.R
 e7210323d3c18bb42ff2b9ad8060aff4 *R/SA.R
 faf5ed7fe3d68f9a7f48b8be554ca84d *R/ShortForm.R
 3e79c3f28b6703aeaabf499f0b7094e8 *R/TS.R
@@ -20,7 +20,7 @@ a123d0d1bdd267ca5f5f177d091fcde2 *R/simulated_annealing.R
 1ff74b538133b678fc10666e82ff91e0 *R/simulated_annealing_internals.R
 0db0cd51d19ec6d5d410791f08435aa2 *R/simulated_annealing_temperatures.R
 c13ac3ec7e14338c07536d3c92828a0f *R/tabu_sem_shortform.R
-24bc7c3f5a645905c53152bd3d0b8f61 *build/partial.rdb
+1dda19015f0aa969acee990c150e3ac9 *build/partial.rdb
 8ed8286ff552a9e9a4d69eff746c9409 *data/exampleAntModel.rda
 b1b5ff7d5ff2c4013a57805a9367dc70 *data/shortExampleAntModel.rda
 3700989e27467ca0981d91d8a122b332 *data/simulated_test_data.rda
@@ -30,7 +30,7 @@ a47b0aa96565338793d334b08b82d57e *man/ShortForm.Rd
 7faf90bedf16d41283e535a7a02a4b3a *man/ShortFormStartup.Rd
 c9a0655ccfaa94c9383782d52cd13504 *man/TS-class.Rd
 0b1e865af5951a602152de8d0da8e3c6 *man/add.param.Rd
-f778d17c114fabc826f8ad3741f88725 *man/antcolony.lavaan.Rd
+20ac14d6eda25594e752eaed250da94d *man/antcolony.lavaan.Rd
 ad876b6bee3c256eee982bb4711e0e97 *man/antcolony.mplus.Rd
 022ba7fbe8e50f2bd6902e0df68e420a *man/dot-onAttach.Rd
 a26f3af6659f944b031cf73a9ee7bddd *man/exampleAntModel.Rd
