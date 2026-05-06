@@ -1,14 +1,14 @@
-304997bf317b1adf4e8cb38662edbd0f *DESCRIPTION
-5eb55fcf51865a87c015f7dbd68db8e2 *NAMESPACE
+5cb2098a2075f207713c1995157c1396 *DESCRIPTION
+80c7b40882ce931af3839e2f5568085c *NAMESPACE
 99cc0041c203819744ffb8f4dd1f26cb *NEWS
 a62aac0b961170bdcfb81528c8039563 *NEWS.md
-86f6be0dc23fa9266afcf1ab0f2e54b7 *R/ACO.R
+d7be879ebfcfc6fef4f72fef9ee77788 *R/ACO.R
 2f5a7822d3049821ba88caad81b8540e *R/ACO_MPlus.R
 0fd4d495502bcb1f335323871bf87c75 *R/ACO_internals.R
 17c8b13f5d73cbdbd609f8cfe9d97544 *R/ACO_lavaan.R
 6aa97a11609e34f5945391af180c5bee *R/SA.R
 b1298a4c5ddcef58d9f992e733de4598 *R/ShortForm.R
-e079c0c64f12b2a69cd03a4bb75e8376 *R/TS.R
+e2ef220d79410497814d5ee1bfd6e6f4 *R/TS.R
 845595f46f80ed2ceef3fec7c22fe571 *R/Tabu_addparam.R
 fffd4c758fbf5b6670e0be0b9d8dca8d *R/Tabu_internal.R
 55fbafa028349f3022bb056f98fce522 *R/Tabu_refit.R
@@ -19,7 +19,7 @@ c52b9904717386762e8a01ecd0a1ca60 *R/data.R
 76ab6f0d40e7dfb518f17fbb14843d40 *R/simulated_annealing.R
 d3fa5d4deff6912989fae42eaff4df1d *R/simulated_annealing_internals.R
 ae00e2e05507d23b36976b0f47fd5a7a *R/simulated_annealing_temperatures.R
-8dd23b1a50dfc41d81fb277d9a9100c6 *R/tabu_sem_shortform.R
+ba9ad939e77600db0d609dae9e25b290 *R/tabu_sem_shortform.R
 f468edae0b96f9755cc32d0087636c38 *build/partial.rdb
 8ed8286ff552a9e9a4d69eff746c9409 *data/exampleAntModel.rda
 b1b5ff7d5ff2c4013a57805a9367dc70 *data/shortExampleAntModel.rda
@@ -37,7 +37,7 @@ b54d883ee99cf246e5a650cac5f778f7 *man/exampleAntModel.Rd
 de8df41d16633915d920bef601d1575d *man/figures/SA-goal.jpg
 91af526b4c6248103eadabd9906d8bfa *man/modelCheck-class.Rd
 3def5024501beaf3e38db7fecb62c77a *man/par.matches.Rd
-ad8d9c17b94076405a294232bed23c13 *man/plot-ACO-ANY-method.Rd
+ab650095da2466f3b5866d23f8d8f519 *man/plot-ACO-ANY-method.Rd
 f1de6780feb631979bc396fd5bf81fd8 *man/plot-SA-ANY-method.Rd
 860f41fe7a8e40a6a9a7c9f51f0100de *man/plot-TS-ANY-method.Rd
 21ef66b904f0279925a1536490c74e21 *man/refit.model.Rd
@@ -54,5 +54,7 @@ beef4bb519555e3798bc6c30b3239b0c *man/summary-SA-method.Rd
 2f02adf445f669f43e4147e4862d8c45 *man/tabu.sem.Rd
 da55a670a00c87401f3ada2bbc111de5 *man/tabuShortForm.Rd
 445221a50d706f40d56b054f120ef18f *tests/testthat.R
+259f7d536f76e79eee1bcae194c9ba49 *tests/testthat/test-aco-internals
 0d625c59303f92ea2fcd4933149cfe69 *tests/testthat/test-simulated_annealing_internals.R
+f522d26f2a49a54ef282dc336582a49a *tests/testthat/test-tabu-internals
 11b18f59281dec2e97c4e9dafe7933cc *tests/testthat/test-temperatures.R
